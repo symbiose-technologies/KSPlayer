@@ -270,19 +270,19 @@ public struct VideoAdaptationState {
 
 open class KSOptions {
     //    public static let shared = KSOptions()
-    /// 最低缓存视频时间
+    /// Minimum Cache Video Time
     @Published public var preferredForwardBufferDuration = KSOptions.preferredForwardBufferDuration
-    /// 最大缓存视频时间
+    /// Maximum Cache Video Time
     public var maxBufferDuration = KSOptions.maxBufferDuration
-    /// 是否开启秒开
+    /// Whether to open seconds
     public var isSecondOpen = KSOptions.isSecondOpen
-    /// 开启精确seek
+    /// Turn on precise seek
     public var isAccurateSeek = KSOptions.isAccurateSeek
     /// Applies to short videos only
     public var isLoopPlay = KSOptions.isLoopPlay
-    /// 是否自动播放，默认false
+    /// Whether to play automatically, the default is false
     public var isAutoPlay = KSOptions.isAutoPlay
-    /// seek完是否自动播放
+    /// Whether to play automatically after seeking
     public var isSeekedAutoPlay = KSOptions.isSeekedAutoPlay
     /*
      AVSEEK_FLAG_BACKWARD: 1
@@ -380,7 +380,7 @@ open class KSOptions {
         appendHeader(["Cookie": cookieStr])
     }
 
-    // 缓冲算法函数
+    // buffer algorithm function
     open func playable(capacitys: [CapacityProtocol], isFirst: Bool, isSeek: Bool) -> LoadingState {
         let packetCount = capacitys.map(\.packetCount).min() ?? 0
         let frameCount = capacitys.map(\.frameCount).min() ?? 0
@@ -524,7 +524,8 @@ open class KSOptions {
     }
 
     /**
-            在创建解码器之前可以对KSOptions做一些处理。例如判断fieldOrder为tt或bb的话，那就自动加videofilters
+     You can do some processing on KSOptions before creating the decoder.
+     For example, if the fieldOrder is judged to be tt or bb, video filters will be added automatically
      */
     open func process(assetTrack _: MediaPlayerTrack) {}
 
@@ -557,7 +558,7 @@ open class KSOptions {
     }
 }
 
-// 缓冲情况
+// buffer situation
 public protocol CapacityProtocol {
     var fps: Float { get }
     var packetCount: Int { get }
@@ -592,23 +593,23 @@ public enum LogLevel: Int32 {
 public extension KSOptions {
     static var firstPlayerType: MediaPlayerProtocol.Type = KSAVPlayer.self
     static var secondPlayerType: MediaPlayerProtocol.Type?
-    /// 最低缓存视频时间
+    /// Minimum cache video time
     static var preferredForwardBufferDuration = 3.0
-    /// 最大缓存视频时间
+    /// Maximum cache video time
     static var maxBufferDuration = 30.0
-    /// 是否开启秒开
+    /// Whether to open the second open
     static var isSecondOpen = false
-    /// 开启精确seek
+    /// Turn on precise seek
     static var isAccurateSeek = true
     /// Applies to short videos only
     static var isLoopPlay = false
-    /// 是否自动播放，默认false
+    /// Whether to play automatically, the default is false
     static var isAutoPlay = false
-    /// seek完是否自动播放
+    /// Whether to play automatically after seeking
     static var isSeekedAutoPlay = true
-    /// 日志级别
+    /// loglevel
     static var logLevel = LogLevel.warning
-    /// 日志输出方式
+    /// Log output method
     static var logFunctionPoint: (String, LogLevel) -> Void = { str, level in
         if level.rawValue <= KSOptions.logLevel.rawValue {
             print(str)

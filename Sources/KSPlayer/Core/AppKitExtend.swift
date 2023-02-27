@@ -54,7 +54,7 @@ public extension NSClickGestureRecognizer {
     }
 }
 
-public extension NSView {
+extension NSView {
     @objc internal var contentMode: UIViewContentMode {
         get {
             if let contentsGravity = backingLayer?.contentsGravity {

@@ -173,13 +173,17 @@ public class KSAVPlayer {
 
     public required init(url: URL, options: KSOptions) {
         KSOptions.setAudioSession()
-        urlAsset = AVURLAsset(url: url, options: options.avOptions)
+//        urlAsset = AVURLAsset(url: url, options: options.avOptions)
+        urlAsset = cachedOrCachingAsset(url, assetOptions: options.avOptions, queue: .ksVideoBg)
         self.options = options
+        
+        
         itemObservation = player.observe(\.currentItem) { [weak self] player, _ in
             guard let self else { return }
             self.observer(playerItem: player.currentItem)
         }
     }
+    
 }
 
 extension KSAVPlayer {
@@ -429,7 +433,10 @@ extension KSAVPlayer: MediaPlayerProtocol {
     public func replace(url: URL, options: KSOptions) {
         KSLog("replaceUrl \(self)")
         shutdown()
-        urlAsset = AVURLAsset(url: url, options: options.avOptions)
+//        urlAsset = AVURLAsset(url: url, options: options.avOptions)
+        urlAsset = cachedOrCachingAsset(url,
+                                        assetOptions: options.avOptions,
+                                        queue: DispatchQueue.main)
         self.options = options
     }
 
@@ -471,6 +478,8 @@ extension KSAVPlayer: MediaPlayerProtocol {
         player.currentItem?.tracks.filter { $0.assetTrack?.mediaType == track.mediaType }.forEach { $0.isEnabled = false }
         track.setIsEnabled(true)
     }
+    
+    
 }
 
 extension AVMediaType {

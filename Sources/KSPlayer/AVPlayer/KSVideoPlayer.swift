@@ -90,7 +90,8 @@ extension KSVideoPlayer: UIViewRepresentable {
                 }
             }
         }
-
+        
+        
         @Published public var isMuted: Bool = false {
             didSet {
                 playerLayer?.player.isMuted = isMuted
@@ -131,7 +132,8 @@ extension KSVideoPlayer: UIViewRepresentable {
             }
         }
 
-        // 在SplitView模式下，第二次进入会先调用makeUIView。然后在调用之前的dismantleUIView.所以如果进入的是同一个View的话，就会导致playerLayer被清空了。最准确的方式是在onDisappear清空playerLayer
+        // In SplitView mode, makeUIView will be called first when entering for the second time.
+        // Then call the previous dismantleUIView. So if the same View is entered, the playerLayer will be cleared. The most accurate way is to clear the playerLayer in onDisappear
         public var playerLayer: KSPlayerLayer?
         public var audioTracks = [MediaPlayerTrack]()
         public var videoTracks = [MediaPlayerTrack]()

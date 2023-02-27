@@ -116,12 +116,12 @@ public struct KSVideoPlayerView: View {
                 }
             #endif
                 .opacity(isMaskShow ? 1 : 0)
-            // 设置opacity为0，还是会去更新View。所以只能这样了
+            // Setting opacity to 0 will still update the View. so that's all
             if isMaskShow {
                 VideoTimeShowView(config: playerCoordinator, model: $model)
             }
         }
-        .preferredColorScheme(.dark)
+//        .preferredColorScheme(.dark)
         #if os(macOS)
             .navigationTitle(url.lastPathComponent)
             .onTapGesture(count: 2) {
@@ -166,16 +166,16 @@ extension KSVideoPlayerView: Equatable {
     }
 }
 
-/// 这是一个频繁变化的model。View要少用这个
+/// This is a frequently changing model. View should use this less
 struct ControllerTimeModel {
-    // 改成int才不会频繁更新
+    // Changing to int will not update frequently
     var currentTime = 0
     var totalTime = 1
 }
 
 @available(iOS 15, tvOS 15, macOS 12, *)
 struct VideoControllerView: View {
-    @StateObject fileprivate var config: KSVideoPlayer.Coordinator
+    @StateObject internal var config: KSVideoPlayer.Coordinator
     @Environment(\.dismiss) private var dismiss
     @State private var isShowSetting = false
     public var body: some View {
@@ -268,9 +268,9 @@ struct VideoControllerView: View {
 }
 
 @available(iOS 15, tvOS 15, macOS 12, *)
-struct VideoTimeShowView: View {
-    @StateObject fileprivate var config: KSVideoPlayer.Coordinator
-    @Binding fileprivate var model: ControllerTimeModel
+internal struct VideoTimeShowView: View {
+    @StateObject internal var config: KSVideoPlayer.Coordinator
+    @Binding internal var model: ControllerTimeModel
     public var body: some View {
         VStack {
             Spacer()
@@ -316,7 +316,7 @@ public class SubtitleModel: ObservableObject {
     @Published public var textFont: Font = .largeTitle
     @Published public var textColor: Color = .white
     @Published public var textPositionFromBottom = 0
-    @Published fileprivate var part: SubtitlePart?
+    @Published internal var part: SubtitlePart?
     public func addSubtitle(info: SubtitleInfo) {
         if subtitleInfos.first(where: { $0.subtitleID == info.subtitleID }) == nil {
             subtitleInfos.append(info)
@@ -325,8 +325,8 @@ public class SubtitleModel: ObservableObject {
 }
 
 @available(iOS 15, tvOS 15, macOS 12, *)
-struct VideoSubtitleView: View {
-    @StateObject fileprivate var model: SubtitleModel
+internal struct VideoSubtitleView: View {
+    @StateObject internal var model: SubtitleModel
     var body: some View {
         VStack {
             Spacer()
@@ -375,7 +375,7 @@ struct VideoSettingView: View {
     @State private var presentSubtileDelayAlert = false
     @State private var presentSubtileDelay = ""
     @EnvironmentObject private var subtitleModel: SubtitleModel
-    @StateObject fileprivate var config: KSVideoPlayer.Coordinator
+    @StateObject internal var config: KSVideoPlayer.Coordinator
     var body: some View {
         config.selectedAudioTrack = (config.playerLayer?.player.isMuted ?? false) ? nil : config.audioTracks.first { $0.isEnabled }
         config.selectedVideoTrack = config.videoTracks.first { $0.isEnabled }
@@ -532,7 +532,7 @@ public class TVSlide: UIControl {
     private lazy var panGestureRecognizer = UIPanGestureRecognizer(target: self, action: #selector(actionPanGesture(sender:)))
     private var beganProgress = Float(0.0)
     private let onEditingChanged: (Bool) -> Void
-    fileprivate var process: Binding<Float> {
+    internal var process: Binding<Float> {
         willSet {
             if newValue.wrappedValue != processView.progress {
                 processView.progress = newValue.wrappedValue
@@ -656,7 +656,7 @@ public class TVSlide: UIControl {
         }
     }
 
-    @objc fileprivate func swipeGestureAction(_ recognizer: UISwipeGestureRecognizer) {
+    @objc internal func swipeGestureAction(_ recognizer: UISwipeGestureRecognizer) {
         switch recognizer.direction {
         case .left:
             onEditingChanged(true)

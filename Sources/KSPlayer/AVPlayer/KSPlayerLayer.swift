@@ -129,7 +129,7 @@ open class KSPlayerLayer: UIView {
         }
     }
 
-    /// 播发器的几种状态
+    ///Several states of the broadcaster
     public private(set) var state = KSPlayerState.prepareToPlay {
         didSet {
             if state != oldValue {
@@ -145,7 +145,7 @@ open class KSPlayerLayer: UIView {
         }
         self.delegate?.player(layer: self, currentTime: self.player.currentPlaybackTime, totalTime: self.player.duration)
         if self.player.playbackState == .playing, self.player.loadState == .playable, self.state == .buffering {
-            // 一个兜底保护，正常不能走到这里
+            // A pocket protection, you can't go here normally
             self.state = .bufferFinished
         }
         if self.player.isPlaying {
@@ -164,7 +164,7 @@ open class KSPlayerLayer: UIView {
         self.options = options
         let firstPlayerType: MediaPlayerProtocol.Type
         if options.display != .plane {
-            // AR模式只能用KSMEPlayer
+            // AR mode can only use KSMEPlayer
             // swiftlint:disable force_cast
             firstPlayerType = NSClassFromString("KSPlayer.KSMEPlayer") as! MediaPlayerProtocol.Type
             // swiftlint:enable force_cast
@@ -298,6 +298,10 @@ open class KSPlayerLayer: UIView {
         }
     }
 
+    public var naturalSize: CGSize {
+        self.player.naturalSize
+    }
+    
     override open func didAddSubview(_ subview: UIView) {
         super.didAddSubview(subview)
         if subview == player.view {
