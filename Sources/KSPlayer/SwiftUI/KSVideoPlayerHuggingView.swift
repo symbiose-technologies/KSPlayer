@@ -88,7 +88,10 @@ public struct KSVideoPlayerHuggingView: View {
 //            Text("NaturalSize  \(Int(videoNaturalSize.width))x\(Int(videoNaturalSize.height))")
 //                .background(.white)
         }
-        .aspectRatio(videoNaturalSize, contentMode: .fill)
+        .aspectRatio(videoNaturalSize, contentMode: .fit)
+        //TODO -- fix the frame size here and pass in explicit min/max width/height
+        
+        
         #if os(macOS)
             .onTapGesture(count: 2) {
                 print("[KSVideoPlayerHuggingView] onDoubleTap")

@@ -71,7 +71,10 @@ extension KSVideoPlayer: UIViewRepresentable {
         updateView(uiView, context: context)
     }
 
-    public static func dismantleNSView(_: NSViewType, coordinator _: Coordinator) {}
+    public static func dismantleNSView(_: NSViewType, coordinator: Coordinator) {
+        coordinator.playerLayer?.pause()
+        coordinator.playerLayer = nil
+    }
     #endif
 
     private func updateView(_ view: KSPlayerLayer, context: Context) {

@@ -197,6 +197,7 @@ open class KSPlayerLayer: UIView {
     }
 
     deinit {
+        print("[KSPlayerLayer] de-init")
         if #available(iOS 15.0, tvOS 15.0, macOS 12.0, *) {
             player.pipController?.contentSource = nil
         }
