@@ -36,18 +36,21 @@ class VideoAssetResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate,
     }()
     
     // MARK: Private
-    
+    private let accessQueue: DispatchQueue
     private let url:            URL
     private var infoResponse:   URLResponse?
     private var urlSession:     URLSession?
     private lazy var mediaData  = Data()
     private var loadingRequests = [AVAssetResourceLoadingRequest]()
     
+    let id: String
     // MARK: - Life Cycle Methods
     
     init(withURL url: URL) {
         self.url = url
-        
+        let id =  UUID().uuidString
+        self.id = id
+        self.accessQueue = DispatchQueue(label: "asset-\(id)", qos: .default)
         super.init()
     }
     
@@ -57,7 +60,9 @@ class VideoAssetResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate,
     // MARK: - Public Methods
     
     func invalidate() {
-        self.loadingRequests.forEach { $0.finishLoading() }
+        accessQueue.async() {
+            self.loadingRequests.forEach { $0.finishLoading() }
+        }
         self.invalidateURLSession()
     }
     
@@ -69,15 +74,17 @@ class VideoAssetResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate,
             let task = self.urlSession!.dataTask(with: self.url)
             task.resume()
         }
-        
-        self.loadingRequests.append(loadingRequest)
-        
+        accessQueue.async() {
+            self.loadingRequests.append(loadingRequest)
+        }
         return true
     }
     
     func resourceLoader(_ resourceLoader: AVAssetResourceLoader, didCancel loadingRequest: AVAssetResourceLoadingRequest) {
-        if let index = self.loadingRequests.firstIndex(of: loadingRequest) {
-            self.loadingRequests.remove(at: index)
+        accessQueue.async() {
+            if let index = self.loadingRequests.firstIndex(of: loadingRequest) {
+                self.loadingRequests.remove(at: index)
+            }
         }
     }
     
@@ -139,18 +146,19 @@ class VideoAssetResourceLoaderDelegate: NSObject, AVAssetResourceLoaderDelegate,
     
     private func processRequests() {
         var finishedRequests = Set<AVAssetResourceLoadingRequest>()
-        self.loadingRequests.forEach {
-            var request = $0
-            if self.isInfo(request: request), let response = self.infoResponse {
-                self.fillInfoRequest(request: &request, response: response)
+        accessQueue.async() {
+            self.loadingRequests.forEach {
+                var request = $0
+                if self.isInfo(request: request), let response = self.infoResponse {
+                    self.fillInfoRequest(request: &request, response: response)
+                }
+                if let dataRequest = request.dataRequest, self.checkAndRespond(forRequest: dataRequest) {
+                    finishedRequests.insert(request)
+                    request.finishLoading()
+                }
             }
-            if let dataRequest = request.dataRequest, self.checkAndRespond(forRequest: dataRequest) {
-                finishedRequests.insert(request)
-                request.finishLoading()
-            }
+            self.loadingRequests = self.loadingRequests.filter { !finishedRequests.contains($0) }
         }
-        
-        self.loadingRequests = self.loadingRequests.filter { !finishedRequests.contains($0) }
     }
     
     private func checkAndRespond(forRequest dataRequest: AVAssetResourceLoadingDataRequest) -> Bool {

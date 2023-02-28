@@ -181,16 +181,20 @@ extension KSVideoPlayer: UIViewRepresentable {
 
 extension KSVideoPlayer.Coordinator: KSPlayerLayerDelegate {
     public func player(layer: KSPlayerLayer, state: KSPlayerState) {
-        if state == .prepareToPlay {
-            isPlay = layer.options.isAutoPlay
-        } else if state == .readyToPlay {
-            videoTracks = layer.player.tracks(mediaType: .video)
-            audioTracks = layer.player.tracks(mediaType: .audio)
-        } else {
-            isLoading = state == .buffering
-            isPlay = state.isPlaying
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            if state == .prepareToPlay {
+                self.isPlay = layer.options.isAutoPlay
+            } else if state == .readyToPlay {
+                self.videoTracks = layer.player.tracks(mediaType: .video)
+                self.audioTracks = layer.player.tracks(mediaType: .audio)
+            } else {
+                self.isLoading = state == .buffering
+                self.isPlay = state.isPlaying
+            }
+            self.onStateChanged?(layer, state)
         }
-        onStateChanged?(layer, state)
     }
 
     public func player(layer _: KSPlayerLayer, currentTime: TimeInterval, totalTime: TimeInterval) {

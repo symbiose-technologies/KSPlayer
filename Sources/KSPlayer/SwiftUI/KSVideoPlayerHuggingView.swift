@@ -149,7 +149,7 @@ internal struct VideoTimeShowHuggingView: View {
                 Text("-" + (model.totalTime - model.currentTime).toString(for: .minOrHour)).font(.caption2.monospacedDigit())
             }
         }
-        .padding()
+        .padding(EdgeInsets(top: 2.0, leading: 4.0, bottom: 4.0, trailing: 4.0))
         .background(Material.ultraThin.opacity(0.75))
         .foregroundColor(.white)
     }
