@@ -19,7 +19,10 @@ public struct KSVideoPlayerHuggingView: View {
 
     @State var videoNaturalSize: CGSize = CGSize(width: 1, height: 1)
     
-    public init(url: URL, options: KSOptions,
+    
+    
+    public init(url: URL,
+                options: KSOptions,
                 subtitleURLs: [URL] = [URL]()) {
         _url = .init(initialValue: url)
         self.options = options

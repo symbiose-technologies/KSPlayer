@@ -74,7 +74,7 @@ public class KSAVPlayer {
         }
     }
 
-    private let playerView = KSAVPlayerView()
+    private let playerView: KSAVPlayerView = KSAVPlayerView()
     private var urlAsset: AVURLAsset
     private var shouldSeekTo = TimeInterval(0)
     private var playerLooper: AVPlayerLooper?
@@ -170,12 +170,18 @@ public class KSAVPlayer {
             }
         }
     }
+    
+    var didSetupAudioSession: Bool = false
 
     public required init(url: URL, options: KSOptions) {
-        KSOptions.setAudioSession()
-//        urlAsset = AVURLAsset(url: url, options: options.avOptions)
         urlAsset = cachedOrCachingAsset(url, assetOptions: options.avOptions, queue: .ksVideoBg)
         self.options = options
+        if options.startWithAudioMuted {
+            player.isMuted = true
+        } else {
+            KSOptions.setAudioSession()
+            self.didSetupAudioSession = true
+        }
         
         
         itemObservation = player.observe(\.currentItem) { [weak self] player, _ in
@@ -466,6 +472,10 @@ extension KSAVPlayer: MediaPlayerProtocol {
             player.isMuted
         }
         set {
+//            if !newValue && !self.didSetupAudioSession {
+//                KSOptions.setAudioSession()
+//                self.didSetupAudioSession = true
+//            }
             player.isMuted = newValue
         }
     }

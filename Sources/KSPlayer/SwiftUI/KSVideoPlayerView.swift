@@ -17,79 +17,111 @@ public struct KSVideoPlayerView: View {
     @State var isMaskShow = true
     @State private var model = ControllerTimeModel()
     @Environment(\.dismiss) private var dismiss
-    public init(url: URL, options: KSOptions, subtitleURLs: [URL] = [URL]()) {
+    
+    var displayConf: PlayerViewDisplayConfig
+    var kbShortcutsEnabled: Bool { displayConf.keyboardShortcutsEnabled }
+    @State var videoNaturalSize: CGSize = CGSize(width: 1, height: 1)
+    
+    var receiveCoordinatorCb: ((KSVideoPlayer.Coordinator) -> Void)?
+    
+    @State var _refreshView: Bool = false
+    
+    public init(url: URL,
+                options: KSOptions,
+                displayConfig: PlayerViewDisplayConfig,
+                receiveCoordinatorCb: ((KSVideoPlayer.Coordinator) -> Void)? = nil,
+                subtitleURLs: [URL] = [URL]()) {
         _url = .init(initialValue: url)
         self.options = options
+        self.displayConf = displayConfig
+        self.receiveCoordinatorCb = receiveCoordinatorCb
         self.subtitleURLs = subtitleURLs
+        print("[KSVideoPlayerView] init: \(url)")
     }
 
     public var body: some View {
-        ZStack {
-            KSVideoPlayer(coordinator: playerCoordinator, url: url, options: options).onPlay { current, total in
-                model.currentTime = Int(current)
-                model.totalTime = Int(max(max(0, total), current))
-                if let subtile = subtitleModel.selectedSubtitle {
-                    let time = current + options.subtitleDelay
-                    if let part = subtile.search(for: time) {
-                        subtitleModel.part = part
-                    } else {
-                        if let part = subtitleModel.part, part.end > part.start, time > part.end {
-                            subtitleModel.part = nil
-                        }
-                    }
+        KSVideoPlayer(coordinator: playerCoordinator, url: url, options: options).onPlay { current, total in
+            model.currentTime = Int(current)
+            model.totalTime = Int(max(max(0, total), current))
+            if let subtile = subtitleModel.selectedSubtitle {
+                let time = current + options.subtitleDelay
+                if let part = subtile.search(for: time) {
+                    subtitleModel.part = part
                 } else {
-                    subtitleModel.part = nil
+                    if let part = subtitleModel.part, part.end > part.start, time > part.end {
+                        subtitleModel.part = nil
+                    }
                 }
+            } else {
+                subtitleModel.part = nil
             }
-            .onStateChanged { playerLayer, state in
-                if state == .readyToPlay {
-                    subtitleURLs.forEach { url in
-                        subtitleModel.addSubtitle(info: URLSubtitleInfo(url: url))
+        }
+        .onStateChanged { playerLayer, state in
+            print("[KSVideoPlayerView] onStateChanged: \(self.url)")
+            let layerNaturalSize = playerLayer.naturalSize
+            if layerNaturalSize != self.videoNaturalSize {
+                self.videoNaturalSize = layerNaturalSize
+            }
+            self._refreshView.toggle()
+            
+            if state == .readyToPlay {
+//                    subtitleURLs.forEach { url in
+//                        subtitleModel.addSubtitle(info: URLSubtitleInfo(url: url))
+//                    }
+//                    subtitleModel.selectedSubtitleInfo = subtitleModel.subtitleInfos.first
+//                    if subtitleModel.selectedSubtitleInfo == nil, let track = playerLayer.player.tracks(mediaType: .subtitle).first, playerLayer.options.autoSelectEmbedSubtitle {
+//                        subtitleModel.selectedSubtitleInfo = track as? SubtitleInfo
+//                    }
+            } else if state == .bufferFinished {
+                if isMaskShow {
+                    DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + KSOptions.animateDelayTimeInterval) {
+                        isMaskShow = playerLayer.state != .bufferFinished
                     }
-                    subtitleModel.selectedSubtitleInfo = subtitleModel.subtitleInfos.first
-                    if subtitleModel.selectedSubtitleInfo == nil, let track = playerLayer.player.tracks(mediaType: .subtitle).first, playerLayer.options.autoSelectEmbedSubtitle {
-                        subtitleModel.selectedSubtitleInfo = track as? SubtitleInfo
-                    }
-                } else if state == .bufferFinished {
-                    if isMaskShow {
-                        DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + KSOptions.animateDelayTimeInterval) {
-                            isMaskShow = playerLayer.state != .bufferFinished
-                        }
-                    }
-                } else {
-                    isMaskShow = true
                 }
-            }
-            #if canImport(UIKit)
-            .onSwipe { direction in
+            } else {
                 isMaskShow = true
-                if direction == .left {
-                    playerCoordinator.skip(interval: -15)
-                } else if direction == .right {
-                    playerCoordinator.skip(interval: 15)
-                }
             }
-            #endif
-            #if !os(tvOS)
-            .onTapGesture {
-                isMaskShow.toggle()
-                #if os(macOS)
-                isMaskShow ? NSCursor.unhide() : NSCursor.setHiddenUntilMouseMoves(true)
-                #endif
-            }
-            #endif
-            .onDisappear {
-                if let playerLayer = playerCoordinator.playerLayer {
-                    if !playerLayer.isPipActive {
-                        playerCoordinator.playerLayer?.pause()
-                        playerCoordinator.playerLayer = nil
+        }
+        
+        
+        #if canImport(UIKit)
+        .if(displayConf.swipeToSeekEnabled) {
+            view
+                .onSwipe { direction in
+                    isMaskShow = true
+                    if direction == .left {
+                        playerCoordinator.skip(interval: -15)
+                    } else if direction == .right {
+                        playerCoordinator.skip(interval: 15)
                     }
                 }
-            }
-            .edgesIgnoringSafeArea(.all)
-            VideoSubtitleView(model: subtitleModel)
-            VideoControllerView(config: playerCoordinator).environmentObject(subtitleModel)
-            #if !os(iOS)
+        }
+        #endif
+        
+        #if !os(tvOS)
+        .onTapGesture {
+            isMaskShow.toggle()
+            #if os(macOS)
+            isMaskShow ? NSCursor.unhide() : NSCursor.setHiddenUntilMouseMoves(true)
+            #endif
+        }
+        #endif
+        
+        .edgesIgnoringSafeArea(.all)
+//        .overlay {
+//            VideoSubtitleView(model: subtitleModel)
+//        }
+        .overlay(alignment: .center) {
+            VideoControllerView(config: playerCoordinator,
+                                displayConf: self.displayConf)
+            .opacity(isMaskShow ? 1 : 0)
+            .environmentObject(subtitleModel)
+            
+            // Setting opacity to 0 will still update the View. so that's all
+        }
+        #if !os(iOS)
+        .if(kbShortcutsEnabled) { view in
+            view
                 .onMoveCommand { direction in
                     isMaskShow = true
                     #if os(macOS)
@@ -114,30 +146,67 @@ public struct KSVideoPlayerView: View {
                         dismiss()
                     }
                 }
-            #endif
-                .opacity(isMaskShow ? 1 : 0)
-            // Setting opacity to 0 will still update the View. so that's all
-            if isMaskShow {
-                VideoTimeShowView(config: playerCoordinator, model: $model)
-            }
         }
-//        .preferredColorScheme(.dark)
-        #if os(macOS)
-            .navigationTitle(url.lastPathComponent)
-            .onTapGesture(count: 2) {
-                NSApplication.shared.keyWindow?.toggleFullScreen(self)
-            }
-        #else
-            .navigationBarHidden(true)
         #endif
-        #if !os(tvOS)
-        .onDrop(of: ["public.file-url"], isTargeted: nil) { providers -> Bool in
-            providers.first?.loadDataRepresentation(forTypeIdentifier: "public.file-url") { data, _ in
-                if let data, let path = NSString(data: data, encoding: 4), let url = URL(string: path as String) {
-                    openURL(url)
+            .overlay(alignment: .bottom) {
+                if isMaskShow {
+                    VideoTimeShowView(config: playerCoordinator, model: $model)
                 }
             }
-            return true
+//        .preferredColorScheme(.dark)
+        
+        .aspectRatio(videoNaturalSize, contentMode: .fit)
+        .onAppear {
+            print("[KSVideoPlayerView] onAppear: \(self.url)")
+            receiveCoordinatorCb?(self.playerCoordinator)
+            
+            if let playerLayer = playerCoordinator.playerLayer,
+               displayConf.playOnAppear {
+                if !playerLayer.player.isPlaying {
+                    playerCoordinator.playerLayer?.play()
+                }
+            }
+        }
+        .onDisappear {
+            print("[KSVideoPlayerView] onDisappear: \(self.url)")
+//            if let playerLayer = playerCoordinator.playerLayer,
+//               displayConf.pauseOnDisappear {
+            if let playerLayer = playerCoordinator.playerLayer,
+                displayConf.pauseOnDisappear {
+                if !playerLayer.isPipActive {
+                    playerCoordinator.playerLayer?.pause()
+                    playerCoordinator.playerLayer = nil
+                }
+            }
+        }
+        #if os(macOS)
+        .if(displayConf.setNavigationInfo) { view in
+            view
+                .navigationTitle(url.lastPathComponent)
+        }
+        .if(displayConf.macDoubleTapFullScreen) { view in
+            view
+                .onTapGesture(count: 2) {
+                    NSApplication.shared.keyWindow?.toggleFullScreen(self)
+                }
+        }
+        #else
+        .if(displayConf.setNavigationInfo) { view in
+            view
+                .navigationBarHidden(true)
+        }
+        #endif
+        #if !os(tvOS)
+        .if(displayConf.acceptDroppedURL) { view in
+            view
+                .onDrop(of: ["public.file-url"], isTargeted: nil) { providers -> Bool in
+                    providers.first?.loadDataRepresentation(forTypeIdentifier: "public.file-url") { data, _ in
+                        if let data, let path = NSString(data: data, encoding: 4), let url = URL(string: path as String) {
+                            openURL(url)
+                        }
+                    }
+                    return true
+                }
         }
         #endif
     }
@@ -178,15 +247,24 @@ struct VideoControllerView: View {
     @StateObject internal var config: KSVideoPlayer.Coordinator
     @Environment(\.dismiss) private var dismiss
     @State private var isShowSetting = false
+    
+    var displayConf: PlayerViewDisplayConfig
+    
+    var kbShortcutsEnabled: Bool {
+        displayConf.keyboardShortcutsEnabled
+    }
+    
     public var body: some View {
         VStack {
             HStack {
                 HStack {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(.title))
+                    if displayConf.showCloseBtn {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(.title))
+                        }
                     }
                     Button {
                         config.playerLayer?.isPipActive.toggle()
@@ -227,7 +305,9 @@ struct VideoControllerView: View {
                     Image(systemName: "gobackward.15")
                 }
                 #if !os(tvOS)
-                .keyboardShortcut(.leftArrow, modifiers: .none)
+                .if(self.kbShortcutsEnabled) {
+                    $0.keyboardShortcut(.leftArrow, modifiers: .none)
+                }
                 #endif
                 Spacer()
                 Button {
@@ -236,7 +316,9 @@ struct VideoControllerView: View {
                     Image(systemName: config.isPlay ? "pause.fill" : "play.fill")
                 }
                 #if !os(tvOS)
-                .keyboardShortcut(.space, modifiers: .none)
+                .if(kbShortcutsEnabled) {
+                    $0.keyboardShortcut(.space, modifiers: .none)
+                }
                 #endif
                 Spacer()
                 Button {
@@ -245,13 +327,16 @@ struct VideoControllerView: View {
                     Image(systemName: "goforward.15")
                 }
                 #if !os(tvOS)
-                .keyboardShortcut(.rightArrow, modifiers: .none)
+                .if(kbShortcutsEnabled) {
+                    $0.keyboardShortcut(.rightArrow, modifiers: .none)
+                }
                 #endif
                 Spacer()
             }
             .font(.system(.title))
             Spacer()
         }
+        .background(.clear)
         .padding()
         .sheet(isPresented: $isShowSetting) {
             VideoSettingView(config: config)
@@ -273,7 +358,7 @@ internal struct VideoTimeShowView: View {
     @Binding internal var model: ControllerTimeModel
     public var body: some View {
         VStack {
-            Spacer()
+//            Spacer()
             Slider(value: Binding {
                 Double(model.currentTime)
             } set: { newValue, _ in
@@ -704,6 +789,6 @@ struct KSVideoPlayerView_Previews: PreviewProvider {
     static var previews: some View {
 //        let url = URL(fileURLWithPath: Bundle.main.path(forResource: "h264", ofType: "mp4")!)
         let url = URL(string: "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4")!
-        KSVideoPlayerView(url: url, options: KSOptions())
+        KSVideoPlayerView(url: url, options: KSOptions(), displayConfig: .justThePlayer())
     }
 }
