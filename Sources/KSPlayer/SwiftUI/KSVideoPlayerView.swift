@@ -43,35 +43,18 @@ public struct KSVideoPlayerView: View {
         KSVideoPlayer(coordinator: playerCoordinator, url: url, options: options).onPlay { current, total in
             model.currentTime = Int(current)
             model.totalTime = Int(max(max(0, total), current))
-            if let subtile = subtitleModel.selectedSubtitle {
-                let time = current + options.subtitleDelay
-                if let part = subtile.search(for: time) {
-                    subtitleModel.part = part
-                } else {
-                    if let part = subtitleModel.part, part.end > part.start, time > part.end {
-                        subtitleModel.part = nil
-                    }
-                }
-            } else {
-                subtitleModel.part = nil
-            }
         }
         .onStateChanged { playerLayer, state in
-            print("[KSVideoPlayerView] onStateChanged: \(self.url)")
             let layerNaturalSize = playerLayer.naturalSize
+            print("[KSVideoPlayerView] naturalSize: \(layerNaturalSize) \(self.url)")
             if layerNaturalSize != self.videoNaturalSize {
+//                print("[KSVideoPlayerView] naturalSize: \(layerNaturalSize) \(self.url)")
                 self.videoNaturalSize = layerNaturalSize
             }
             self._refreshView.toggle()
             
             if state == .readyToPlay {
-//                    subtitleURLs.forEach { url in
-//                        subtitleModel.addSubtitle(info: URLSubtitleInfo(url: url))
-//                    }
-//                    subtitleModel.selectedSubtitleInfo = subtitleModel.subtitleInfos.first
-//                    if subtitleModel.selectedSubtitleInfo == nil, let track = playerLayer.player.tracks(mediaType: .subtitle).first, playerLayer.options.autoSelectEmbedSubtitle {
-//                        subtitleModel.selectedSubtitleInfo = track as? SubtitleInfo
-//                    }
+                
             } else if state == .bufferFinished {
                 if isMaskShow {
                     DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + KSOptions.animateDelayTimeInterval) {
@@ -85,7 +68,7 @@ public struct KSVideoPlayerView: View {
         
         
         #if canImport(UIKit)
-        .if(displayConf.swipeToSeekEnabled) {
+        .if(displayConf.swipeToSeekEnabled) { view in
             view
                 .onSwipe { direction in
                     isMaskShow = true
@@ -108,9 +91,6 @@ public struct KSVideoPlayerView: View {
         #endif
         
         .edgesIgnoringSafeArea(.all)
-//        .overlay {
-//            VideoSubtitleView(model: subtitleModel)
-//        }
         .overlay(alignment: .center) {
             VideoControllerView(config: playerCoordinator,
                                 displayConf: self.displayConf)

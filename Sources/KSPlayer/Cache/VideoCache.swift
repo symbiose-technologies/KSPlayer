@@ -46,7 +46,7 @@ func getCachedVideoIfPossible(_ networkURL: URL) -> URL? {
     if fileManager.fileExists(atPath: localURL.path) == false {
         return nil
     }
-    print("[VideoCache] found local file at: \(localURL) for network URL: \(networkURL)")
+//    print("[VideoCache] found local file at: \(localURL) for network URL: \(networkURL)")
 
     guard let _ = try? Data(contentsOf: localURL) else {
         return nil
@@ -62,6 +62,7 @@ func writeCachedVideoData(_ data: Data, networkURL: URL) -> URL? {
     guard let fileURL = localURLForNetworkURL(networkURL) else { return nil }
     
     let basePath = fileURL.deletingLastPathComponent()
+    
     
     if fileManager.fileExists(atPath: fileURL.path) {
         do {
@@ -81,7 +82,7 @@ func writeCachedVideoData(_ data: Data, networkURL: URL) -> URL? {
 
     let success = fileManager.createFile(atPath: fileURL.path,
                                          contents: data)
-    print("[VideoCache] writeCachedvideoData filePath: \(fileURL.path) success: \(success)")
+//    print("[VideoCache] writeCachedvideoData filePath: \(fileURL.path) success: \(success)")
     
     return fileURL
 }
