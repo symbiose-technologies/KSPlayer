@@ -237,7 +237,7 @@ struct VideoControllerView: View {
     public var body: some View {
         VStack {
             HStack {
-                HStack {
+                Group {
                     if displayConf.showCloseBtn {
                         Button {
                             dismiss()
@@ -258,22 +258,26 @@ struct VideoControllerView: View {
                     }
                 }
                 Spacer()
-                ProgressView().opacity(config.isLoading ? 1 : 0)
+                ProgressView()
+                    .opacity(config.isLoading ? 1 : 0)
                 Spacer()
-                HStack {
+                Group {
                     Button {
                         config.isMuted.toggle()
                     } label: {
                         Image(systemName: config.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                     }
                     #if !os(tvOS)
-                    AirPlayView().fixedSize()
+                    AirPlayView()
+                        .fixedSize(horizontal: true, vertical: true)
+                        .frame(minWidth: 30, maxWidth: 80, minHeight: 30, maxHeight: 80)
+//                        .fixedSize()
                     #endif
-                    Button {
-                        isShowSetting.toggle()
-                    } label: {
-                        Image(systemName: "ellipsis.circle").font(.system(.title))
-                    }
+//                    Button {
+//                        isShowSetting.toggle()
+//                    } label: {
+//                        Image(systemName: "ellipsis.circle").font(.system(.title))
+//                    }
                 }
             }
             Spacer()
