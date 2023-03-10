@@ -47,14 +47,13 @@ public struct KSVideoPlayerView: View {
         .onStateChanged { playerLayer, state in
             let layerNaturalSize = playerLayer.naturalSize
             print("[KSVideoPlayerView] naturalSize: \(layerNaturalSize) \(self.url)")
-            if layerNaturalSize != self.videoNaturalSize {
-//                print("[KSVideoPlayerView] naturalSize: \(layerNaturalSize) \(self.url)")
-                self.videoNaturalSize = layerNaturalSize
-            }
-            self._refreshView.toggle()
+//            if layerNaturalSize != self.videoNaturalSize {
+////                print("[KSVideoPlayerView] naturalSize: \(layerNaturalSize) \(self.url)")
+//                self.videoNaturalSize = layerNaturalSize
+//            }
             
             if state == .readyToPlay {
-                
+                self._refreshView.toggle()
             } else if state == .bufferFinished {
                 if isMaskShow {
                     DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + KSOptions.animateDelayTimeInterval) {
@@ -135,7 +134,7 @@ public struct KSVideoPlayerView: View {
             }
 //        .preferredColorScheme(.dark)
         
-        .aspectRatio(videoNaturalSize, contentMode: .fit)
+//        .aspectRatio(videoNaturalSize, contentMode: .fit)
         .onAppear {
             print("[KSVideoPlayerView] onAppear: \(self.url)")
             receiveCoordinatorCb?(self.playerCoordinator)

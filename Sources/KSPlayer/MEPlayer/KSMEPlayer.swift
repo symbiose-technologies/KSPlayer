@@ -129,6 +129,7 @@ extension KSMEPlayer {
 
 extension KSMEPlayer: MEPlayerDelegate {
     func sourceDidOpened() {
+        print("KSMEPlayer: sourceDidOpen")
         isReadyToPlay = true
         options.readyTime = CACurrentMediaTime()
         let audioDescriptor = tracks(mediaType: .audio).compactMap {

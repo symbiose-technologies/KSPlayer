@@ -10,14 +10,27 @@ import Combine
 import CoreGraphics
 public final class KSAVPlayerView: UIView {
     public let player = AVQueuePlayer()
+    
     override public init(frame: CGRect) {
         super.init(frame: frame)
         #if !canImport(UIKit)
-        layer = AVPlayerLayer()
+        macInit()
         #endif
         playerLayer.player = player
         player.automaticallyWaitsToMinimizeStalling = false
     }
+    
+    #if !canImport(UIKit)
+    private func macInit() {
+        layer = AVPlayerLayer()
+        wantsLayer = true
+//        layer = rootLayer
+//        rootLayer.addSublayer(playerLayer)
+//        playerLayer.frame = bounds
+//        playerLayer.autoresizingMask = [.layerWidthSizable, .layerHeightSizable]
+        
+    }
+    #endif
 
     @available(*, unavailable)
     public required init?(coder _: NSCoder) {
@@ -598,6 +611,7 @@ public extension AVAsset {
 
 extension CGImage {
     static func combine(images: [(CGRect, CGImage)]) -> CGImage? {
+        print("[KSPlayer] CGImage.combine")
         if images.isEmpty {
             return nil
         }

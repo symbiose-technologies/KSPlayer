@@ -64,14 +64,18 @@ extension KSVideoPlayer: UIViewRepresentable {
     #else
     public typealias NSViewType = KSPlayerLayer
     public func makeNSView(context: Context) -> NSViewType {
-        context.coordinator.makeView(url: url, options: options)
+//        print("[KSVideoPlayer] makeNSView")
+
+        return context.coordinator.makeView(url: url, options: options)
     }
 
     public func updateNSView(_ uiView: NSViewType, context: Context) {
+//        print("[KSVideoPlayer] updateNSView")
         updateView(uiView, context: context)
     }
 
     public static func dismantleNSView(_: NSViewType, coordinator: Coordinator) {
+//        print("[KSVideoPlayer] dismantleNSView")
         coordinator.playerLayer?.pause()
         coordinator.playerLayer = nil
     }
