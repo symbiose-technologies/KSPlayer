@@ -32,9 +32,15 @@ func cachedOrCachingAsset(_ URL: Foundation.URL,
         }
         return asset
     }
-    
-    
 }
+
+public class KSVideoCache {
+    
+    public static func getKSVideoCachedLocalURL(for networkURL: URL) -> URL? {
+        return localURLForNetworkURL(networkURL)
+    }
+}
+
 
 
 

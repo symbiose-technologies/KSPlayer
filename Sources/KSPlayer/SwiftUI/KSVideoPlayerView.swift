@@ -38,6 +38,22 @@ public struct KSVideoPlayerView: View {
         self.subtitleURLs = subtitleURLs
         print("[KSVideoPlayerView] init: \(url)")
     }
+    
+    public init(url: URL,
+                options: KSOptions,
+                displayConfig: PlayerViewDisplayConfig,
+                coordinator: KSVideoPlayer.Coordinator
+    ) {
+        _url = .init(initialValue: url)
+        self.options = options
+        self.displayConf = displayConfig
+        self.receiveCoordinatorCb = nil
+        self.subtitleURLs = []
+        self._playerCoordinator = .init(wrappedValue: coordinator)
+        
+        print("[KSVideoPlayerView] init with coordinator: \(url)")
+    }
+    
 
     public var body: some View {
         KSVideoPlayer(coordinator: playerCoordinator, url: url, options: options).onPlay { current, total in
